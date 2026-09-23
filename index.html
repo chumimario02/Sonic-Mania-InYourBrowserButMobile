@@ -11,7 +11,14 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+        }
 
         html, body {
             width: 100%;
@@ -20,8 +27,7 @@
             background-color: #000;
             font-family: 'Inter', sans-serif;
             text-align: center;
-            user-select: none;
-            -webkit-user-select: none;
+            touch-action: none;
         }
 
         canvas {
@@ -210,12 +216,12 @@
             padding: 25px 35px;
         }
 
-        /* Palanca / Joystick Azul */
+        /* Joystick Azul */
         .joystick-base {
             width: 130px;
             height: 130px;
-            background: rgba(0, 102, 255, 0.2);
-            border: 3px solid rgba(0, 153, 255, 0.6);
+            background: rgba(0, 102, 255, 0.25);
+            border: 3px solid rgba(0, 153, 255, 0.7);
             border-radius: 50%;
             position: relative;
             pointer-events: auto;
@@ -223,8 +229,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 0 15px rgba(0, 102, 255, 0.3);
-            backdrop-filter: blur(2px);
+            box-shadow: 0 0 15px rgba(0, 102, 255, 0.4);
+            backdrop-filter: blur(3px);
         }
 
         .joystick-knob {
@@ -255,7 +261,7 @@
             cursor: pointer;
         }
 
-        .btn-jump:active {
+        .btn-jump:active, .btn-jump.active {
             transform: scale(0.92);
             background: radial-gradient(circle, #cc0000 0%, #990000 100%);
         }
@@ -475,22 +481,30 @@
             FS.syncfs(false, function(err) {});
         });
 
+        /* --- CONTROLADOR DE EVENTOS DE TECLADO --- */
+        function sendKey(type, key, code, keyCode) {
+            var ev = new KeyboardEvent(type, {
+                key: key,
+                code: code,
+                keyCode: keyCode,
+                which: keyCode,
+                charCode: type === 'keydown' ? key.charCodeAt(0) : 0,
+                bubbles: true,
+                cancelable: true,
+                view: window
+            });
+
+            // Forzar propiedades para compatibilidad total con Emscripten/SDL2
+            Object.defineProperty(ev, 'keyCode', { get: function() { return keyCode; } });
+            Object.defineProperty(ev, 'which', { get: function() { return keyCode; } });
+
+            window.dispatchEvent(ev);
+            document.dispatchEvent(ev);
+            canvas.dispatchEvent(ev);
+        }
+
         /* --- LÓGICA DE CONTROLES TÁCTILES --- */
         (function() {
-            function triggerKeyEvent(type, keyName, keyCode) {
-                var ev = new KeyboardEvent(type, {
-                    key: keyName,
-                    code: keyName,
-                    keyCode: keyCode,
-                    which: keyCode,
-                    bubbles: true,
-                    cancelable: true
-                });
-                window.dispatchEvent(ev);
-                document.dispatchEvent(ev);
-                canvas.dispatchEvent(ev);
-            }
-
             var activeKeys = {
                 ArrowUp: false,
                 ArrowDown: false,
@@ -498,17 +512,18 @@
                 ArrowRight: false
             };
 
-            function setKeyState(key, keyCode, pressed) {
+            function setDirectionState(key, code, keyCode, pressed) {
                 if (activeKeys[key] !== pressed) {
                     activeKeys[key] = pressed;
-                    triggerKeyEvent(pressed ? 'keydown' : 'keyup', key, keyCode);
+                    sendKey(pressed ? 'keydown' : 'keyup', key, code, keyCode);
                 }
             }
 
-            // Manejo del Joystick
+            // --- Joystick ---
             var base = document.getElementById('joystick-base');
             var knob = document.getElementById('joystick-knob');
             var touchId = null;
+            var isMouseDown = false;
 
             function processJoystick(clientX, clientY) {
                 var rect = base.getBoundingClientRect();
@@ -528,21 +543,23 @@
                 knob.style.transform = 'translate(' + deltaX + 'px, ' + deltaY + 'px)';
 
                 var threshold = 15;
-                setKeyState('ArrowLeft', 37, deltaX < -threshold);
-                setKeyState('ArrowRight', 39, deltaX > threshold);
-                setKeyState('ArrowUp', 38, deltaY < -threshold);
-                setKeyState('ArrowDown', 40, deltaY > threshold);
+                setDirectionState('ArrowLeft', 'ArrowLeft', 37, deltaX < -threshold);
+                setDirectionState('ArrowRight', 'ArrowRight', 39, deltaX > threshold);
+                setDirectionState('ArrowUp', 'ArrowUp', 38, deltaY < -threshold);
+                setDirectionState('ArrowDown', 'ArrowDown', 40, deltaY > threshold);
             }
 
             function resetJoystick() {
                 touchId = null;
+                isMouseDown = false;
                 knob.style.transform = 'translate(0px, 0px)';
-                setKeyState('ArrowLeft', 37, false);
-                setKeyState('ArrowRight', 39, false);
-                setKeyState('ArrowUp', 38, false);
-                setKeyState('ArrowDown', 40, false);
+                setDirectionState('ArrowLeft', 'ArrowLeft', 37, false);
+                setDirectionState('ArrowRight', 'ArrowRight', 39, false);
+                setDirectionState('ArrowUp', 'ArrowUp', 38, false);
+                setDirectionState('ArrowDown', 'ArrowDown', 40, false);
             }
 
+            // Táctil Joystick
             base.addEventListener('touchstart', function(e) {
                 if (touchId === null) {
                     var touch = e.changedTouches[0];
@@ -571,25 +588,68 @@
             });
             base.addEventListener('touchcancel', resetJoystick);
 
-            // Manejo del Botón Rojo de Salto (Ejecuta Tecla 'x' / 'X')
+            // Ratón Joystick (para pruebas en PC)
+            base.addEventListener('mousedown', function(e) {
+                isMouseDown = true;
+                processJoystick(e.clientX, e.clientY);
+            });
+
+            window.addEventListener('mousemove', function(e) {
+                if (isMouseDown) {
+                    processJoystick(e.clientX, e.clientY);
+                }
+            });
+
+            window.addEventListener('mouseup', function() {
+                if (isMouseDown) resetJoystick();
+            });
+
+
+            // --- Botón Rojo de Salto ---
             var btnJump = document.getElementById('btn-jump');
 
+            function pressJump() {
+                btnJump.classList.add('active');
+                // Se envían X, Z y Espacio para máxima compatibilidad con Sonic Mania
+                sendKey('keydown', 'x', 'KeyX', 88);
+                sendKey('keydown', 'z', 'KeyZ', 90);
+                sendKey('keydown', ' ', 'Space', 32);
+            }
+
+            function releaseJump() {
+                btnJump.classList.remove('active');
+                sendKey('keyup', 'x', 'KeyX', 88);
+                sendKey('keyup', 'z', 'KeyZ', 90);
+                sendKey('keyup', ' ', 'Space', 32);
+            }
+
             btnJump.addEventListener('touchstart', function(e) {
-                triggerKeyEvent('keydown', 'x', 88);
-                triggerKeyEvent('keydown', 'X', 88);
+                pressJump();
                 e.preventDefault();
             }, { passive: false });
 
             btnJump.addEventListener('touchend', function(e) {
-                triggerKeyEvent('keyup', 'x', 88);
-                triggerKeyEvent('keyup', 'X', 88);
+                releaseJump();
                 e.preventDefault();
             });
 
             btnJump.addEventListener('touchcancel', function(e) {
-                triggerKeyEvent('keyup', 'x', 88);
-                triggerKeyEvent('keyup', 'X', 88);
+                releaseJump();
             });
+
+            // Compatibilidad con Ratón
+            btnJump.addEventListener('mousedown', function(e) {
+                pressJump();
+            });
+
+            btnJump.addEventListener('mouseup', function(e) {
+                releaseJump();
+            });
+
+            btnJump.addEventListener('mouseleave', function(e) {
+                releaseJump();
+            });
+
         })();
     </script>
     <script src="https://cdn.jsdelivr.net/gh/UGBONTOP/Sonic-Mania-InYourBrowser@main/Data.js"></script>
