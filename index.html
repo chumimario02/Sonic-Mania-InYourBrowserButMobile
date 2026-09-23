@@ -22,7 +22,6 @@
             text-align: center;
             user-select: none;
             -webkit-user-select: none;
-            touch-action: none;
         }
 
         canvas {
@@ -197,7 +196,7 @@
         }
 
         /* --- CONTROLES TÁCTILES --- */
-        #touch-controls {
+        .touch-overlay {
             position: fixed;
             top: 0;
             left: 0;
@@ -205,96 +204,86 @@
             height: 100%;
             pointer-events: none;
             z-index: 999;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding: 25px 35px;
         }
 
-        /* Palanca azul */
-        #joystick-container {
-            position: absolute;
-            bottom: 30px;
-            left: 30px;
+        /* Palanca / Joystick Azul */
+        .joystick-base {
             width: 130px;
             height: 130px;
-            pointer-events: auto;
-            touch-action: none;
-        }
-
-        #joystick-base {
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 140, 255, 0.25);
-            border: 3px solid rgba(0, 180, 255, 0.6);
+            background: rgba(0, 102, 255, 0.2);
+            border: 3px solid rgba(0, 153, 255, 0.6);
             border-radius: 50%;
             position: relative;
-            box-shadow: 0 0 15px rgba(0, 140, 255, 0.3);
-            backdrop-filter: blur(4px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        #joystick-knob {
-            width: 55px;
-            height: 55px;
-            background: radial-gradient(circle, rgba(0, 210, 255, 0.9) 0%, rgba(0, 120, 255, 0.8) 100%);
-            border: 2px solid rgba(255, 255, 255, 0.8);
-            border-radius: 50%;
-            position: absolute;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
-            transition: transform 0.05s ease-out;
-        }
-
-        /* Botón rojo de salto (J) */
-        #button-container {
-            position: absolute;
-            bottom: 35px;
-            right: 35px;
             pointer-events: auto;
             touch-action: none;
-        }
-
-        #jump-button {
-            width: 80px;
-            height: 80px;
-            background: radial-gradient(circle, rgba(255, 60, 80, 0.85) 0%, rgba(200, 0, 30, 0.85) 100%);
-            border: 3px solid rgba(255, 255, 255, 0.6);
-            border-radius: 50%;
-            color: white;
-            font-family: 'Inter', sans-serif;
-            font-size: 22px;
-            font-weight: 900;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
-            box-shadow: 0 0 15px rgba(255, 0, 50, 0.4), 0 4px 10px rgba(0, 0, 0, 0.5);
-            cursor: pointer;
-            backdrop-filter: blur(4px);
             display: flex;
             align-items: center;
             justify-content: center;
-            outline: none;
-            -webkit-tap-highlight-color: transparent;
+            box-shadow: 0 0 15px rgba(0, 102, 255, 0.3);
+            backdrop-filter: blur(2px);
         }
 
-        #jump-button:active, #jump-button.active {
+        .joystick-knob {
+            width: 55px;
+            height: 55px;
+            background: radial-gradient(circle, #00d2ff 0%, #0055ff 100%);
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            position: absolute;
+            box-shadow: 0 0 10px rgba(0, 210, 255, 0.8);
+            transform: translate(0px, 0px);
+            transition: transform 0.04s ease-out;
+        }
+
+        /* Botón Rojo de Salto */
+        .btn-jump {
+            width: 85px;
+            height: 85px;
+            background: radial-gradient(circle, #ff4d4d 0%, #cc0000 100%);
+            border: 3px solid rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            pointer-events: auto;
+            touch-action: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
+            cursor: pointer;
+        }
+
+        .btn-jump:active {
             transform: scale(0.92);
-            background: radial-gradient(circle, rgba(255, 90, 110, 1) 0%, rgba(230, 0, 40, 1) 100%);
-            box-shadow: 0 0 25px rgba(255, 50, 80, 0.8);
+            background: radial-gradient(circle, #cc0000 0%, #990000 100%);
+        }
+
+        /* Cuadrado Blanco dentro del botón */
+        .square-icon {
+            width: 28px;
+            height: 28px;
+            border: 4px solid #ffffff;
+            border-radius: 4px;
+            background: transparent;
+            box-shadow: inset 0 0 4px rgba(0,0,0,0.3);
         }
     </style>
 </head>
 <body>
 
-    <!-- Canvas principal -->
+    <!-- Canvas always present and running, just invisible until fade done -->
     <canvas id="canvas" width="424" height="240" onclick="window.focus();" oncontextmenu="event.preventDefault();"></canvas>
     <textarea id="output" rows="8"></textarea>
 
-    <!-- Controles táctiles en pantalla -->
-    <div id="touch-controls">
-        <div id="joystick-container">
-            <div id="joystick-base">
-                <div id="joystick-knob"></div>
-            </div>
+    <!-- Controles Táctiles -->
+    <div class="touch-overlay">
+        <div id="joystick-base" class="joystick-base">
+            <div id="joystick-knob" class="joystick-knob"></div>
         </div>
-        <div id="button-container">
-            <button id="jump-button" aria-label="Saltar">J</button>
+        <div id="btn-jump" class="btn-jump">
+            <div class="square-icon"></div>
         </div>
     </div>
 
@@ -389,148 +378,6 @@
                 document.exitFullscreen();
             }
         };
-
-        // --- SISTEMA DE EMULACIÓN DE TECLAS TÁCTILES ---
-        var activeDirections = {
-            ArrowLeft: false,
-            ArrowRight: false,
-            ArrowUp: false,
-            ArrowDown: false
-        };
-
-        function sendKeyEvent(type, code, key, keyCode) {
-            var event = new KeyboardEvent(type, {
-                bubbles: true,
-                cancelable: true,
-                key: key,
-                code: code,
-                keyCode: keyCode,
-                which: keyCode
-            });
-            window.dispatchEvent(event);
-            document.dispatchEvent(event);
-            if (canvas) canvas.dispatchEvent(event);
-        }
-
-        function triggerKey(code, key, keyCode, isDown) {
-            if (activeDirections[code] === isDown) return;
-            activeDirections[code] = isDown;
-            sendKeyEvent(isDown ? 'keydown' : 'keyup', code, key, keyCode);
-        }
-
-        var jumpState = false;
-        function triggerJump(isDown) {
-            if (jumpState === isDown) return;
-            jumpState = isDown;
-            sendKeyEvent(isDown ? 'keydown' : 'keyup', 'KeyJ', 'j', 74);
-        }
-
-        // Lógica de Palanca (Joystick Azul)
-        var base = document.getElementById('joystick-base');
-        var knob = document.getElementById('joystick-knob');
-        var joystickTouchId = null;
-        var maxRadius = 45;
-
-        function updateJoystick(touch) {
-            var rect = base.getBoundingClientRect();
-            var centerX = rect.left + rect.width / 2;
-            var centerY = rect.top + rect.height / 2;
-
-            var deltaX = touch.clientX - centerX;
-            var deltaY = touch.clientY - centerY;
-            var distance = Math.hypot(deltaX, deltaY);
-
-            if (distance > maxRadius) {
-                deltaX = (deltaX / distance) * maxRadius;
-                deltaY = (deltaY / distance) * maxRadius;
-            }
-
-            knob.style.transform = 'translate(' + deltaX + 'px, ' + deltaY + 'px)';
-
-            var deadzone = 12;
-            triggerKey('ArrowLeft', 'ArrowLeft', 37, deltaX < -deadzone);
-            triggerKey('ArrowRight', 'ArrowRight', 39, deltaX > deadzone);
-            triggerKey('ArrowUp', 'ArrowUp', 38, deltaY < -deadzone);
-            triggerKey('ArrowDown', 'ArrowDown', 40, deltaY > deadzone);
-        }
-
-        function resetJoystick() {
-            joystickTouchId = null;
-            knob.style.transform = 'translate(0px, 0px)';
-            triggerKey('ArrowLeft', 'ArrowLeft', 37, false);
-            triggerKey('ArrowRight', 'ArrowRight', 39, false);
-            triggerKey('ArrowUp', 'ArrowUp', 38, false);
-            triggerKey('ArrowDown', 'ArrowDown', 40, false);
-        }
-
-        base.addEventListener('touchstart', function(e) {
-            e.preventDefault();
-            if (joystickTouchId === null && e.changedTouches.length > 0) {
-                var touch = e.changedTouches[0];
-                joystickTouchId = touch.identifier;
-                updateJoystick(touch);
-            }
-        }, { passive: false });
-
-        window.addEventListener('touchmove', function(e) {
-            if (joystickTouchId !== null) {
-                for (var i = 0; i < e.changedTouches.length; i++) {
-                    if (e.changedTouches[i].identifier === joystickTouchId) {
-                        e.preventDefault();
-                        updateJoystick(e.changedTouches[i]);
-                        break;
-                    }
-                }
-            }
-        }, { passive: false });
-
-        function handleTouchEnd(e) {
-            if (joystickTouchId !== null) {
-                for (var i = 0; i < e.changedTouches.length; i++) {
-                    if (e.changedTouches[i].identifier === joystickTouchId) {
-                        resetJoystick();
-                        break;
-                    }
-                }
-            }
-        }
-
-        window.addEventListener('touchend', handleTouchEnd);
-        window.addEventListener('touchcancel', handleTouchEnd);
-
-        // Lógica de Botón Rojo (Jump - Tecla J)
-        var jumpBtn = document.getElementById('jump-button');
-
-        jumpBtn.addEventListener('touchstart', function(e) {
-            e.preventDefault();
-            jumpBtn.classList.add('active');
-            triggerJump(true);
-        }, { passive: false });
-
-        jumpBtn.addEventListener('touchend', function(e) {
-            e.preventDefault();
-            jumpBtn.classList.remove('active');
-            triggerJump(false);
-        }, { passive: false });
-
-        jumpBtn.addEventListener('touchcancel', function(e) {
-            e.preventDefault();
-            jumpBtn.classList.remove('active');
-            triggerJump(false);
-        }, { passive: false });
-
-        // Soporte adicional para ratón en escritorio
-        jumpBtn.addEventListener('mousedown', function(e) {
-            e.preventDefault();
-            jumpBtn.classList.add('active');
-            triggerJump(true);
-        });
-        window.addEventListener('mouseup', function() {
-            if (jumpState) {
-                jumpBtn.classList.remove('active');
-                triggerJump(false);
-            }
-        });
 
         var Module = {
             preRun: [function() {
@@ -627,6 +474,123 @@
             } catch(e) {}
             FS.syncfs(false, function(err) {});
         });
+
+        /* --- LÓGICA DE CONTROLES TÁCTILES --- */
+        (function() {
+            function triggerKeyEvent(type, keyName, keyCode) {
+                var ev = new KeyboardEvent(type, {
+                    key: keyName,
+                    code: keyName,
+                    keyCode: keyCode,
+                    which: keyCode,
+                    bubbles: true,
+                    cancelable: true
+                });
+                window.dispatchEvent(ev);
+                document.dispatchEvent(ev);
+                canvas.dispatchEvent(ev);
+            }
+
+            var activeKeys = {
+                ArrowUp: false,
+                ArrowDown: false,
+                ArrowLeft: false,
+                ArrowRight: false
+            };
+
+            function setKeyState(key, keyCode, pressed) {
+                if (activeKeys[key] !== pressed) {
+                    activeKeys[key] = pressed;
+                    triggerKeyEvent(pressed ? 'keydown' : 'keyup', key, keyCode);
+                }
+            }
+
+            // Manejo del Joystick
+            var base = document.getElementById('joystick-base');
+            var knob = document.getElementById('joystick-knob');
+            var touchId = null;
+
+            function processJoystick(clientX, clientY) {
+                var rect = base.getBoundingClientRect();
+                var centerX = rect.left + rect.width / 2;
+                var centerY = rect.top + rect.height / 2;
+
+                var deltaX = clientX - centerX;
+                var deltaY = clientY - centerY;
+                var distance = Math.hypot(deltaX, deltaY);
+                var maxRadius = rect.width / 2 - 10;
+
+                if (distance > maxRadius) {
+                    deltaX = (deltaX / distance) * maxRadius;
+                    deltaY = (deltaY / distance) * maxRadius;
+                }
+
+                knob.style.transform = 'translate(' + deltaX + 'px, ' + deltaY + 'px)';
+
+                var threshold = 15;
+                setKeyState('ArrowLeft', 37, deltaX < -threshold);
+                setKeyState('ArrowRight', 39, deltaX > threshold);
+                setKeyState('ArrowUp', 38, deltaY < -threshold);
+                setKeyState('ArrowDown', 40, deltaY > threshold);
+            }
+
+            function resetJoystick() {
+                touchId = null;
+                knob.style.transform = 'translate(0px, 0px)';
+                setKeyState('ArrowLeft', 37, false);
+                setKeyState('ArrowRight', 39, false);
+                setKeyState('ArrowUp', 38, false);
+                setKeyState('ArrowDown', 40, false);
+            }
+
+            base.addEventListener('touchstart', function(e) {
+                if (touchId === null) {
+                    var touch = e.changedTouches[0];
+                    touchId = touch.identifier;
+                    processJoystick(touch.clientX, touch.clientY);
+                }
+            }, { passive: false });
+
+            base.addEventListener('touchmove', function(e) {
+                for (var i = 0; i < e.changedTouches.length; i++) {
+                    if (e.changedTouches[i].identifier === touchId) {
+                        processJoystick(e.changedTouches[i].clientX, e.changedTouches[i].clientY);
+                        break;
+                    }
+                }
+                e.preventDefault();
+            }, { passive: false });
+
+            base.addEventListener('touchend', function(e) {
+                for (var i = 0; i < e.changedTouches.length; i++) {
+                    if (e.changedTouches[i].identifier === touchId) {
+                        resetJoystick();
+                        break;
+                    }
+                }
+            });
+            base.addEventListener('touchcancel', resetJoystick);
+
+            // Manejo del Botón Rojo de Salto (Ejecuta Tecla 'x' / 'X')
+            var btnJump = document.getElementById('btn-jump');
+
+            btnJump.addEventListener('touchstart', function(e) {
+                triggerKeyEvent('keydown', 'x', 88);
+                triggerKeyEvent('keydown', 'X', 88);
+                e.preventDefault();
+            }, { passive: false });
+
+            btnJump.addEventListener('touchend', function(e) {
+                triggerKeyEvent('keyup', 'x', 88);
+                triggerKeyEvent('keyup', 'X', 88);
+                e.preventDefault();
+            });
+
+            btnJump.addEventListener('touchcancel', function(e) {
+                triggerKeyEvent('keyup', 'x', 88);
+                triggerKeyEvent('keyup', 'X', 88);
+            });
+        })();
     </script>
     <script src="https://cdn.jsdelivr.net/gh/UGBONTOP/Sonic-Mania-InYourBrowser@main/Data.js"></script>
     <script async type="text/javascript" src="https://cdn.jsdelivr.net/gh/UGBONTOP/Sonic-Mania-InYourBrowser@refs/heads/main/RSDKv5U.js"></script>
