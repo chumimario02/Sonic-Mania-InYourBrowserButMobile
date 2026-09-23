@@ -1,5 +1,3 @@
-<-- crunch arcade on top not rlly tho but he did this and nobody else did so haha -->
-
 <!doctype html>
 <html lang="en-us">
 <head>
@@ -20,6 +18,9 @@
             background-color: #000;
             font-family: 'Inter', sans-serif;
             text-align: center;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
         }
 
         canvas {
@@ -192,6 +193,82 @@
             background: rgba(0,0,0,0.8);
             border-color: rgba(255,255,255,0.4);
         }
+
+        /* --- CONTROLES TÁCTILES --- */
+        .touch-overlay {
+            position: fixed;
+            bottom: 20px;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding: 0 25px;
+            z-index: 999;
+            pointer-events: none;
+        }
+
+        /* D-Pad Azul */
+        .dpad {
+            width: 140px;
+            height: 140px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            pointer-events: auto;
+        }
+
+        .dpad-btn {
+            background: rgba(0, 140, 255, 0.5);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: bold;
+            backdrop-filter: blur(4px);
+            cursor: pointer;
+        }
+
+        .dpad-btn:active, .dpad-btn.active {
+            background: rgba(0, 80, 220, 0.85);
+            transform: scale(0.95);
+        }
+
+        .dpad-up { grid-column: 2; grid-row: 1; border-radius: 12px 12px 0 0; }
+        .dpad-left { grid-column: 1; grid-row: 2; border-radius: 12px 0 0 12px; }
+        .dpad-right { grid-column: 3; grid-row: 2; border-radius: 0 12px 12px 0; }
+        .dpad-down { grid-column: 2; grid-row: 3; border-radius: 0 0 12px 12px; }
+        .dpad-center { grid-column: 2; grid-row: 2; background: rgba(0, 100, 220, 0.4); border: none; }
+
+        /* Botón de Salto Rojo */
+        .action-container {
+            pointer-events: auto;
+            margin-bottom: 10px;
+        }
+
+        .btn-jump {
+            width: 85px;
+            height: 85px;
+            border-radius: 50%;
+            background: rgba(235, 45, 45, 0.65);
+            border: 3px solid rgba(255, 255, 255, 0.6);
+            color: white;
+            font-weight: 900;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            cursor: pointer;
+        }
+
+        .btn-jump:active, .btn-jump.active {
+            background: rgba(180, 15, 15, 0.9);
+            transform: scale(0.92);
+        }
     </style>
 </head>
 <body>
@@ -199,6 +276,23 @@
     <!-- Canvas always present and running, just invisible until fade done -->
     <canvas id="canvas" width="424" height="240" onclick="window.focus();" oncontextmenu="event.preventDefault();"></canvas>
     <textarea id="output" rows="8"></textarea>
+
+    <!-- Overlay de Controles Táctiles -->
+    <div class="touch-overlay">
+        <!-- D-Pad Azul -->
+        <div class="dpad">
+            <div class="dpad-btn dpad-up" id="btn-up">▲</div>
+            <div class="dpad-btn dpad-left" id="btn-left">◀</div>
+            <div class="dpad-btn dpad-center"></div>
+            <div class="dpad-btn dpad-right" id="btn-right">▶</div>
+            <div class="dpad-btn dpad-down" id="btn-down">▼</div>
+        </div>
+
+        <!-- Botón de Salto Rojo -->
+        <div class="action-container">
+            <div class="btn-jump" id="btn-jump">JUMP</div>
+        </div>
+    </div>
 
     <div class="control-panel">
         <button id="fullscreen-button" class="game-btn">
@@ -291,6 +385,58 @@
                 document.exitFullscreen();
             }
         };
+
+        /* --- SCRIPT PARA VINCULAR BOTONES TÁCTILES CON EL TECLADO --- */
+        function bindKey(elementId, keys) {
+            var el = document.getElementById(elementId);
+            if (!el) return;
+
+            function sendKeyEvent(type, keyInfo) {
+                var event = new KeyboardEvent(type, {
+                    key: keyInfo.key,
+                    code: keyInfo.code,
+                    keyCode: keyInfo.keyCode,
+                    which: keyInfo.keyCode,
+                    bubbles: true,
+                    cancelable: true
+                });
+                window.dispatchEvent(event);
+                canvas.dispatchEvent(event);
+            }
+
+            function handlePress(e) {
+                e.preventDefault();
+                el.classList.add('active');
+                keys.forEach(function(k) { sendKeyEvent('keydown', k); });
+            }
+
+            function handleRelease(e) {
+                e.preventDefault();
+                el.classList.remove('active');
+                keys.forEach(function(k) { sendKeyEvent('keyup', k); });
+            }
+
+            el.addEventListener('touchstart', handlePress, { passive: false });
+            el.addEventListener('touchend', handleRelease, { passive: false });
+            el.addEventListener('touchcancel', handleRelease, { passive: false });
+
+            // Soporte para pruebas con mouse en PC
+            el.addEventListener('mousedown', handlePress);
+            el.addEventListener('mouseup', handleRelease);
+            el.addEventListener('mouseleave', handleRelease);
+        }
+
+        // Mapeo de teclas de flechas para el D-Pad
+        bindKey('btn-up', [{ key: 'ArrowUp', code: 'ArrowUp', keyCode: 38 }]);
+        bindKey('btn-down', [{ key: 'ArrowDown', code: 'ArrowDown', keyCode: 40 }]);
+        bindKey('btn-left', [{ key: 'ArrowLeft', code: 'ArrowLeft', keyCode: 37 }]);
+        bindKey('btn-right', [{ key: 'ArrowRight', code: 'ArrowRight', keyCode: 39 }]);
+
+        // Mapeo del botón de salto (Simula Barra Espaciadora y la tecla Z)
+        bindKey('btn-jump', [
+            { key: ' ', code: 'Space', keyCode: 32 },
+            { key: 'z', code: 'KeyZ', keyCode: 90 }
+        ]);
 
         var Module = {
             preRun: [function() {
