@@ -273,7 +273,6 @@
 </head>
 <body>
 
-    <!-- Canvas always present and running, just invisible until fade done -->
     <canvas id="canvas" width="424" height="240" onclick="window.focus();" oncontextmenu="event.preventDefault();"></canvas>
     <textarea id="output" rows="8"></textarea>
 
@@ -432,8 +431,10 @@
         bindKey('btn-left', [{ key: 'ArrowLeft', code: 'ArrowLeft', keyCode: 37 }]);
         bindKey('btn-right', [{ key: 'ArrowRight', code: 'ArrowRight', keyCode: 39 }]);
 
-        // Mapeo del botón de salto (Simula Barra Espaciadora y la tecla Z)
+        // Mapeo del botón de salto (Ahora transmite la tecla J, Espacio y Z)
         bindKey('btn-jump', [
+            { key: 'j', code: 'KeyJ', keyCode: 74 },
+            { key: 'J', code: 'KeyJ', keyCode: 74 },
             { key: ' ', code: 'Space', keyCode: 32 },
             { key: 'z', code: 'KeyZ', keyCode: 90 }
         ]);
