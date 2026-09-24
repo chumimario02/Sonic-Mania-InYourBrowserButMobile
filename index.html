@@ -216,6 +216,34 @@
             padding: 25px 35px;
         }
 
+        /* Botón W (Esquina superior izquierda) */
+        .btn-w {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 55px;
+            height: 55px;
+            background: radial-gradient(circle, #ffcc00 0%, #cc9900 100%);
+            border: 3px solid rgba(255, 255, 255, 0.9);
+            border-radius: 12px;
+            color: #ffffff;
+            font-size: 22px;
+            font-weight: 900;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: auto;
+            touch-action: none;
+            box-shadow: 0 0 12px rgba(255, 204, 0, 0.5);
+            cursor: pointer;
+            backdrop-filter: blur(3px);
+        }
+
+        .btn-w:active, .btn-w.active {
+            transform: scale(0.92);
+            background: radial-gradient(circle, #cc9900 0%, #996600 100%);
+        }
+
         /* Joystick Azul */
         .joystick-base {
             width: 130px;
@@ -266,7 +294,7 @@
             background: radial-gradient(circle, #cc0000 0%, #990000 100%);
         }
 
-        /* Cuadrado Blanco dentro del botón */
+        /* Cuadrado Blanco dentro del botón de salto */
         .square-icon {
             width: 28px;
             height: 28px;
@@ -285,6 +313,9 @@
 
     <!-- Controles Táctiles -->
     <div class="touch-overlay">
+        <!-- Botón W -->
+        <div id="btn-w" class="btn-w">W</div>
+
         <div id="joystick-base" class="joystick-base">
             <div id="joystick-knob" class="joystick-knob"></div>
         </div>
@@ -602,6 +633,46 @@
 
             window.addEventListener('mouseup', function() {
                 if (isMouseDown) resetJoystick();
+            });
+
+
+            // --- Botón W ---
+            var btnW = document.getElementById('btn-w');
+
+            function pressW() {
+                btnW.classList.add('active');
+                sendKey('keydown', 'w', 'KeyW', 87);
+            }
+
+            function releaseW() {
+                btnW.classList.remove('active');
+                sendKey('keyup', 'w', 'KeyW', 87);
+            }
+
+            btnW.addEventListener('touchstart', function(e) {
+                pressW();
+                e.preventDefault();
+            }, { passive: false });
+
+            btnW.addEventListener('touchend', function(e) {
+                releaseW();
+                e.preventDefault();
+            });
+
+            btnW.addEventListener('touchcancel', function(e) {
+                releaseW();
+            });
+
+            btnW.addEventListener('mousedown', function(e) {
+                pressW();
+            });
+
+            btnW.addEventListener('mouseup', function(e) {
+                releaseW();
+            });
+
+            btnW.addEventListener('mouseleave', function(e) {
+                releaseW();
             });
 
 
