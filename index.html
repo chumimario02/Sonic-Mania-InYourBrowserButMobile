@@ -213,6 +213,10 @@
             z-index: 999;
         }
 
+        .touch-overlay.hidden {
+            display: none !important;
+        }
+
         .touch-element {
             position: absolute !important;
             pointer-events: auto;
@@ -244,7 +248,6 @@
             justify-content: center;
             box-shadow: 0 0 12px rgba(255, 204, 0, 0.5);
             cursor: pointer;
-            backdrop-filter: blur(3px);
         }
 
         .btn-w:active, .btn-w.active {
@@ -252,7 +255,7 @@
             background: radial-gradient(circle, #cc9900 0%, #996600 100%);
         }
 
-        /* Joystick Azul */
+        /* Joystick Azul (sin efecto borroso) */
         .joystick-base {
             bottom: 25px;
             left: 35px;
@@ -265,7 +268,6 @@
             align-items: center;
             justify-content: center;
             box-shadow: 0 0 15px rgba(0, 102, 255, 0.4);
-            backdrop-filter: blur(3px);
         }
 
         .joystick-knob {
@@ -413,6 +415,9 @@
 
     <!-- Panel de Control Superior -->
     <div class="control-panel">
+        <button id="toggle-touch-btn" class="game-btn">
+            👁️ Ocultar Controles
+        </button>
         <button id="controls-button" class="game-btn">
             ⚙️ Controles
         </button>
@@ -647,7 +652,9 @@
         (function() {
             var isEditMode = false;
             var currentScale = 1.0;
+            var controlsVisible = true;
 
+            var touchOverlay = document.getElementById('touch-overlay');
             var btnW = document.getElementById('btn-w');
             var base = document.getElementById('joystick-base');
             var knob = document.getElementById('joystick-knob');
@@ -655,6 +662,7 @@
 
             var controlsModal = document.getElementById('controls-modal');
             var controlsBtn = document.getElementById('controls-button');
+            var toggleTouchBtn = document.getElementById('toggle-touch-btn');
             var closeControlsBtn = document.getElementById('close-controls-btn');
             var resetControlsBtn = document.getElementById('reset-controls-btn');
             var scaleSlider = document.getElementById('scale-slider');
@@ -674,6 +682,23 @@
                 }
             }
 
+            // --- MOSTRAR / OCULTAR CONTROLES ---
+            function setControlsVisibility(visible) {
+                controlsVisible = visible;
+                if (visible) {
+                    touchOverlay.classList.remove('hidden');
+                    toggleTouchBtn.innerHTML = '👁️ Ocultar Controles';
+                } else {
+                    touchOverlay.classList.add('hidden');
+                    toggleTouchBtn.innerHTML = '👁️ Mostrar Controles';
+                }
+            }
+
+            toggleTouchBtn.addEventListener('click', function() {
+                setControlsVisibility(!controlsVisible);
+                saveConfig();
+            });
+
             // --- SISTEMA DE ARRASTRE Y ESCALADO (EDIT MODE) ---
             function applyScale(scale) {
                 currentScale = scale;
@@ -691,6 +716,7 @@
 
             function saveConfig() {
                 var config = {
+                    visible: controlsVisible,
                     scale: currentScale,
                     w: { left: btnW.style.left, top: btnW.style.top, right: btnW.style.right, bottom: btnW.style.bottom },
                     joy: { left: base.style.left, top: base.style.top, right: base.style.right, bottom: base.style.bottom },
@@ -704,6 +730,7 @@
                 if (saved) {
                     try {
                         var config = JSON.parse(saved);
+                        if (typeof config.visible !== 'undefined') setControlsVisibility(config.visible);
                         if (config.scale) applyScale(config.scale);
                         
                         function setPos(el, pos) {
@@ -723,6 +750,7 @@
 
             function resetControls() {
                 applyScale(1.0);
+                setControlsVisibility(true);
                 
                 btnW.style.left = '20px'; btnW.style.top = '20px';
                 btnW.style.right = ''; btnW.style.bottom = '';
@@ -738,6 +766,7 @@
 
             // Abrir y Cerrar Menú de Edición
             controlsBtn.addEventListener('click', function() {
+                if (!controlsVisible) setControlsVisibility(true);
                 isEditMode = true;
                 document.body.classList.add('edit-mode');
                 controlsModal.classList.add('active');
@@ -752,7 +781,7 @@
 
             resetControlsBtn.addEventListener('click', resetControls);
 
-            // Hacer elementos arrastables en la pantalla
+            // Hacer elementos arrastrabes en la pantalla
             function makeDraggable(element) {
                 var dragging = false;
                 var startX, startY, initialLeft, initialTop;
