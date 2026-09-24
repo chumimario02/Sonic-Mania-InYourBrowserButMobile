@@ -605,22 +605,17 @@
             });
 
 
-            // --- Botón Rojo de Salto ---
+            // --- Botón Rojo de Salto (Ejecuta tecla 'A') ---
             var btnJump = document.getElementById('btn-jump');
 
             function pressJump() {
                 btnJump.classList.add('active');
-                // Se envían X, Z y Espacio para máxima compatibilidad con Sonic Mania
-                sendKey('keydown', 'x', 'KeyX', 88);
-                sendKey('keydown', 'z', 'KeyZ', 90);
-                sendKey('keydown', ' ', 'Space', 32);
+                sendKey('keydown', 'a', 'KeyA', 65);
             }
 
             function releaseJump() {
                 btnJump.classList.remove('active');
-                sendKey('keyup', 'x', 'KeyX', 88);
-                sendKey('keyup', 'z', 'KeyZ', 90);
-                sendKey('keyup', ' ', 'Space', 32);
+                sendKey('keyup', 'a', 'KeyA', 65);
             }
 
             btnJump.addEventListener('touchstart', function(e) {
