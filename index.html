@@ -177,6 +177,8 @@
             top: 15px;
             right: 15px;
             z-index: 1001;
+            display: flex;
+            gap: 8px;
         }
 
         .game-btn {
@@ -192,7 +194,6 @@
             gap: 8px;
             backdrop-filter: blur(4px);
             transition: all 0.2s;
-            min-width: 130px;
             font-family: 'Inter', sans-serif;
         }
 
@@ -210,15 +211,24 @@
             height: 100%;
             pointer-events: none;
             z-index: 999;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            padding: 25px 35px;
         }
 
-        /* Botón W (Esquina superior izquierda) */
+        .touch-element {
+            position: absolute !important;
+            pointer-events: auto;
+            touch-action: none;
+            transform-origin: center center;
+        }
+
+        /* Indicador visual en modo edición */
+        body.edit-mode .touch-element {
+            outline: 2px dashed #00d2ff !important;
+            outline-offset: 6px;
+            cursor: move;
+        }
+
+        /* Botón W */
         .btn-w {
-            position: absolute;
             top: 20px;
             left: 20px;
             width: 55px;
@@ -232,8 +242,6 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            pointer-events: auto;
-            touch-action: none;
             box-shadow: 0 0 12px rgba(255, 204, 0, 0.5);
             cursor: pointer;
             backdrop-filter: blur(3px);
@@ -246,14 +254,13 @@
 
         /* Joystick Azul */
         .joystick-base {
+            bottom: 25px;
+            left: 35px;
             width: 130px;
             height: 130px;
             background: rgba(0, 102, 255, 0.25);
             border: 3px solid rgba(0, 153, 255, 0.7);
             border-radius: 50%;
-            position: relative;
-            pointer-events: auto;
-            touch-action: none;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -271,17 +278,18 @@
             box-shadow: 0 0 10px rgba(0, 210, 255, 0.8);
             transform: translate(0px, 0px);
             transition: transform 0.04s ease-out;
+            pointer-events: none;
         }
 
         /* Botón Rojo de Salto */
         .btn-jump {
+            bottom: 25px;
+            right: 35px;
             width: 85px;
             height: 85px;
             background: radial-gradient(circle, #ff4d4d 0%, #cc0000 100%);
             border: 3px solid rgba(255, 255, 255, 0.9);
             border-radius: 50%;
-            pointer-events: auto;
-            touch-action: none;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -294,7 +302,6 @@
             background: radial-gradient(circle, #cc0000 0%, #990000 100%);
         }
 
-        /* Cuadrado Blanco dentro del botón de salto */
         .square-icon {
             width: 28px;
             height: 28px;
@@ -302,33 +309,136 @@
             border-radius: 4px;
             background: transparent;
             box-shadow: inset 0 0 4px rgba(0,0,0,0.3);
+            pointer-events: none;
         }
+
+        /* --- MENÚ DE CONFIGURACIÓN DE CONTROLES --- */
+        .controls-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(15, 15, 20, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            color: white;
+            z-index: 1002;
+            display: none;
+            flex-direction: column;
+            gap: 15px;
+            width: 90%;
+            max-width: 320px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
+            text-align: left;
+        }
+
+        .controls-modal.active {
+            display: flex;
+        }
+
+        .controls-modal h3 {
+            font-size: 16px;
+            font-weight: 900;
+            text-align: center;
+            color: #00d2ff;
+        }
+
+        .modal-row {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .modal-row label {
+            font-size: 12px;
+            font-weight: 700;
+            color: #ddd;
+        }
+
+        .modal-row input[type="range"] {
+            width: 100%;
+            accent-color: #00d2ff;
+            cursor: pointer;
+        }
+
+        .modal-info {
+            font-size: 11px;
+            color: #aaa;
+            line-height: 1.4;
+            background: rgba(255,255,255,0.05);
+            padding: 8px;
+            border-radius: 6px;
+            border-left: 3px solid #00d2ff;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 5px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-save { background: #00d2ff; color: #000; }
+        .btn-reset { background: rgba(255,255,255,0.15); color: #fff; }
+        .modal-btn:hover { opacity: 0.85; }
     </style>
 </head>
 <body>
 
-    <!-- Canvas always present and running, just invisible until fade done -->
     <canvas id="canvas" width="424" height="240" onclick="window.focus();" oncontextmenu="event.preventDefault();"></canvas>
     <textarea id="output" rows="8"></textarea>
 
     <!-- Controles Táctiles -->
-    <div class="touch-overlay">
-        <!-- Botón W -->
-        <div id="btn-w" class="btn-w">W</div>
-
-        <div id="joystick-base" class="joystick-base">
+    <div class="touch-overlay" id="touch-overlay">
+        <div id="btn-w" class="btn-w touch-element">W</div>
+        <div id="joystick-base" class="joystick-base touch-element">
             <div id="joystick-knob" class="joystick-knob"></div>
         </div>
-        <div id="btn-jump" class="btn-jump">
+        <div id="btn-jump" class="btn-jump touch-element">
             <div class="square-icon"></div>
         </div>
     </div>
 
+    <!-- Panel de Control Superior -->
     <div class="control-panel">
+        <button id="controls-button" class="game-btn">
+            ⚙️ Controles
+        </button>
         <button id="fullscreen-button" class="game-btn">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
             Fullscreen
         </button>
+    </div>
+
+    <!-- Menú Modal de Ajuste de Controles -->
+    <div id="controls-modal" class="controls-modal">
+        <h3>⚙️ Ajustar Controles</h3>
+        
+        <div class="modal-row">
+            <label id="scale-label">Tamaño: 100%</label>
+            <input type="range" id="scale-slider" min="0.7" max="2.0" step="0.05" value="1.0">
+        </div>
+
+        <div class="modal-info">
+            💡 <b>Mover controles:</b> Toca y arrastra cualquier botón directamente en la pantalla para cambiarlo de lugar.
+        </div>
+
+        <div class="modal-actions">
+            <button id="reset-controls-btn" class="modal-btn btn-reset">Restablecer</button>
+            <button id="close-controls-btn" class="modal-btn btn-save">Guardar y Salir</button>
+        </div>
     </div>
 
     <div id="loading-screen">
@@ -525,7 +635,6 @@
                 view: window
             });
 
-            // Forzar propiedades para compatibilidad total con Emscripten/SDL2
             Object.defineProperty(ev, 'keyCode', { get: function() { return keyCode; } });
             Object.defineProperty(ev, 'which', { get: function() { return keyCode; } });
 
@@ -534,8 +643,23 @@
             canvas.dispatchEvent(ev);
         }
 
-        /* --- LÓGICA DE CONTROLES TÁCTILES --- */
+        /* --- LÓGICA DE CONTROLES TÁCTILES Y PERSONALIZACIÓN --- */
         (function() {
+            var isEditMode = false;
+            var currentScale = 1.0;
+
+            var btnW = document.getElementById('btn-w');
+            var base = document.getElementById('joystick-base');
+            var knob = document.getElementById('joystick-knob');
+            var btnJump = document.getElementById('btn-jump');
+
+            var controlsModal = document.getElementById('controls-modal');
+            var controlsBtn = document.getElementById('controls-button');
+            var closeControlsBtn = document.getElementById('close-controls-btn');
+            var resetControlsBtn = document.getElementById('reset-controls-btn');
+            var scaleSlider = document.getElementById('scale-slider');
+            var scaleLabel = document.getElementById('scale-label');
+
             var activeKeys = {
                 ArrowUp: false,
                 ArrowDown: false,
@@ -550,21 +674,157 @@
                 }
             }
 
-            // --- Joystick ---
-            var base = document.getElementById('joystick-base');
-            var knob = document.getElementById('joystick-knob');
+            // --- SISTEMA DE ARRASTRE Y ESCALADO (EDIT MODE) ---
+            function applyScale(scale) {
+                currentScale = scale;
+                scaleSlider.value = scale;
+                scaleLabel.textContent = 'Tamaño: ' + Math.round(scale * 100) + '%';
+
+                btnW.style.transform = 'scale(' + scale + ')';
+                base.style.transform = 'scale(' + scale + ')';
+                btnJump.style.transform = 'scale(' + scale + ')';
+            }
+
+            scaleSlider.addEventListener('input', function() {
+                applyScale(parseFloat(this.value));
+            });
+
+            function saveConfig() {
+                var config = {
+                    scale: currentScale,
+                    w: { left: btnW.style.left, top: btnW.style.top, right: btnW.style.right, bottom: btnW.style.bottom },
+                    joy: { left: base.style.left, top: base.style.top, right: base.style.right, bottom: base.style.bottom },
+                    jump: { left: btnJump.style.left, top: btnJump.style.top, right: btnJump.style.right, bottom: btnJump.style.bottom }
+                };
+                localStorage.setItem('sonic_mania_touch_config', JSON.stringify(config));
+            }
+
+            function loadConfig() {
+                var saved = localStorage.getItem('sonic_mania_touch_config');
+                if (saved) {
+                    try {
+                        var config = JSON.parse(saved);
+                        if (config.scale) applyScale(config.scale);
+                        
+                        function setPos(el, pos) {
+                            if (!pos) return;
+                            el.style.left = pos.left || '';
+                            el.style.top = pos.top || '';
+                            el.style.right = pos.right || '';
+                            el.style.bottom = pos.bottom || '';
+                        }
+
+                        setPos(btnW, config.w);
+                        setPos(base, config.joy);
+                        setPos(btnJump, config.jump);
+                    } catch(e) {}
+                }
+            }
+
+            function resetControls() {
+                applyScale(1.0);
+                
+                btnW.style.left = '20px'; btnW.style.top = '20px';
+                btnW.style.right = ''; btnW.style.bottom = '';
+
+                base.style.left = '35px'; base.style.bottom = '25px';
+                base.style.right = ''; base.style.top = '';
+
+                btnJump.style.right = '35px'; btnJump.style.bottom = '25px';
+                btnJump.style.left = ''; btnJump.style.top = '';
+
+                localStorage.removeItem('sonic_mania_touch_config');
+            }
+
+            // Abrir y Cerrar Menú de Edición
+            controlsBtn.addEventListener('click', function() {
+                isEditMode = true;
+                document.body.classList.add('edit-mode');
+                controlsModal.classList.add('active');
+            });
+
+            closeControlsBtn.addEventListener('click', function() {
+                isEditMode = false;
+                document.body.classList.remove('edit-mode');
+                controlsModal.classList.remove('active');
+                saveConfig();
+            });
+
+            resetControlsBtn.addEventListener('click', resetControls);
+
+            // Hacer elementos arrastables en la pantalla
+            function makeDraggable(element) {
+                var dragging = false;
+                var startX, startY, initialLeft, initialTop;
+
+                function onStart(e) {
+                    if (!isEditMode) return;
+                    dragging = true;
+                    var clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                    var clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+                    var rect = element.getBoundingClientRect();
+                    startX = clientX;
+                    startY = clientY;
+                    initialLeft = rect.left;
+                    initialTop = rect.top;
+
+                    element.style.right = 'auto';
+                    element.style.bottom = 'auto';
+                    element.style.left = initialLeft + 'px';
+                    element.style.top = initialTop + 'px';
+
+                    e.stopPropagation();
+                }
+
+                function onMove(e) {
+                    if (!dragging || !isEditMode) return;
+                    var clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                    var clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+                    var deltaX = clientX - startX;
+                    var deltaY = clientY - startY;
+
+                    var newLeft = initialLeft + deltaX;
+                    var newTop = initialTop + deltaY;
+
+                    element.style.left = newLeft + 'px';
+                    element.style.top = newTop + 'px';
+                    e.preventDefault();
+                }
+
+                function onEnd() {
+                    dragging = false;
+                }
+
+                element.addEventListener('touchstart', onStart, { passive: false });
+                window.addEventListener('touchmove', onMove, { passive: false });
+                window.addEventListener('touchend', onEnd);
+
+                element.addEventListener('mousedown', onStart);
+                window.addEventListener('mousemove', onMove);
+                window.addEventListener('mouseup', onEnd);
+            }
+
+            makeDraggable(btnW);
+            makeDraggable(base);
+            makeDraggable(btnJump);
+
+            // --- JOYSTICK LOGIC ---
             var touchId = null;
             var isMouseDown = false;
 
             function processJoystick(clientX, clientY) {
+                if (isEditMode) return;
+
                 var rect = base.getBoundingClientRect();
                 var centerX = rect.left + rect.width / 2;
                 var centerY = rect.top + rect.height / 2;
 
-                var deltaX = clientX - centerX;
-                var deltaY = clientY - centerY;
+                var deltaX = (clientX - centerX) / currentScale;
+                var deltaY = (clientY - centerY) / currentScale;
                 var distance = Math.hypot(deltaX, deltaY);
-                var maxRadius = rect.width / 2 - 10;
+                var maxRadius = (rect.width / 2 - 10) / currentScale;
 
                 if (distance > maxRadius) {
                     deltaX = (deltaX / distance) * maxRadius;
@@ -590,8 +850,8 @@
                 setDirectionState('ArrowDown', 'ArrowDown', 40, false);
             }
 
-            // Táctil Joystick
             base.addEventListener('touchstart', function(e) {
+                if (isEditMode) return;
                 if (touchId === null) {
                     var touch = e.changedTouches[0];
                     touchId = touch.identifier;
@@ -600,6 +860,7 @@
             }, { passive: false });
 
             base.addEventListener('touchmove', function(e) {
+                if (isEditMode) return;
                 for (var i = 0; i < e.changedTouches.length; i++) {
                     if (e.changedTouches[i].identifier === touchId) {
                         processJoystick(e.changedTouches[i].clientX, e.changedTouches[i].clientY);
@@ -610,6 +871,7 @@
             }, { passive: false });
 
             base.addEventListener('touchend', function(e) {
+                if (isEditMode) return;
                 for (var i = 0; i < e.changedTouches.length; i++) {
                     if (e.changedTouches[i].identifier === touchId) {
                         resetJoystick();
@@ -619,103 +881,62 @@
             });
             base.addEventListener('touchcancel', resetJoystick);
 
-            // Ratón Joystick (para pruebas en PC)
             base.addEventListener('mousedown', function(e) {
+                if (isEditMode) return;
                 isMouseDown = true;
                 processJoystick(e.clientX, e.clientY);
             });
 
             window.addEventListener('mousemove', function(e) {
-                if (isMouseDown) {
-                    processJoystick(e.clientX, e.clientY);
-                }
+                if (isMouseDown && !isEditMode) processJoystick(e.clientX, e.clientY);
             });
 
             window.addEventListener('mouseup', function() {
                 if (isMouseDown) resetJoystick();
             });
 
-
-            // --- Botón W ---
-            var btnW = document.getElementById('btn-w');
-
+            // --- BOTÓN W LOGIC ---
             function pressW() {
+                if (isEditMode) return;
                 btnW.classList.add('active');
                 sendKey('keydown', 'w', 'KeyW', 87);
             }
 
             function releaseW() {
+                if (isEditMode) return;
                 btnW.classList.remove('active');
                 sendKey('keyup', 'w', 'KeyW', 87);
             }
 
-            btnW.addEventListener('touchstart', function(e) {
-                pressW();
-                e.preventDefault();
-            }, { passive: false });
+            btnW.addEventListener('touchstart', function(e) { pressW(); if (!isEditMode) e.preventDefault(); }, { passive: false });
+            btnW.addEventListener('touchend', function(e) { releaseW(); if (!isEditMode) e.preventDefault(); });
+            btnW.addEventListener('touchcancel', releaseW);
+            btnW.addEventListener('mousedown', pressW);
+            btnW.addEventListener('mouseup', releaseW);
+            btnW.addEventListener('mouseleave', releaseW);
 
-            btnW.addEventListener('touchend', function(e) {
-                releaseW();
-                e.preventDefault();
-            });
-
-            btnW.addEventListener('touchcancel', function(e) {
-                releaseW();
-            });
-
-            btnW.addEventListener('mousedown', function(e) {
-                pressW();
-            });
-
-            btnW.addEventListener('mouseup', function(e) {
-                releaseW();
-            });
-
-            btnW.addEventListener('mouseleave', function(e) {
-                releaseW();
-            });
-
-
-            // --- Botón Rojo de Salto (Ejecuta tecla 'A') ---
-            var btnJump = document.getElementById('btn-jump');
-
+            // --- BOTÓN DE SALTO LOGIC ---
             function pressJump() {
+                if (isEditMode) return;
                 btnJump.classList.add('active');
                 sendKey('keydown', 'a', 'KeyA', 65);
             }
 
             function releaseJump() {
+                if (isEditMode) return;
                 btnJump.classList.remove('active');
                 sendKey('keyup', 'a', 'KeyA', 65);
             }
 
-            btnJump.addEventListener('touchstart', function(e) {
-                pressJump();
-                e.preventDefault();
-            }, { passive: false });
+            btnJump.addEventListener('touchstart', function(e) { pressJump(); if (!isEditMode) e.preventDefault(); }, { passive: false });
+            btnJump.addEventListener('touchend', function(e) { releaseJump(); if (!isEditMode) e.preventDefault(); });
+            btnJump.addEventListener('touchcancel', releaseJump);
+            btnJump.addEventListener('mousedown', pressJump);
+            btnJump.addEventListener('mouseup', releaseJump);
+            btnJump.addEventListener('mouseleave', releaseJump);
 
-            btnJump.addEventListener('touchend', function(e) {
-                releaseJump();
-                e.preventDefault();
-            });
-
-            btnJump.addEventListener('touchcancel', function(e) {
-                releaseJump();
-            });
-
-            // Compatibilidad con Ratón
-            btnJump.addEventListener('mousedown', function(e) {
-                pressJump();
-            });
-
-            btnJump.addEventListener('mouseup', function(e) {
-                releaseJump();
-            });
-
-            btnJump.addEventListener('mouseleave', function(e) {
-                releaseJump();
-            });
-
+            // Cargar configuración guardada al iniciar
+            loadConfig();
         })();
     </script>
     <script src="https://cdn.jsdelivr.net/gh/UGBONTOP/Sonic-Mania-InYourBrowser@main/Data.js"></script>
