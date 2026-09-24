@@ -195,11 +195,28 @@
             backdrop-filter: blur(4px);
             transition: all 0.2s;
             font-family: 'Inter', sans-serif;
+            font-weight: 700;
         }
 
         .game-btn:hover {
             background: rgba(0,0,0,0.8);
             border-color: rgba(255,255,255,0.4);
+        }
+
+        /* Botón Verde Pausar */
+        .btn-green-pause {
+            background: #2ecc71 !important;
+            border-color: rgba(255,255,255,0.4) !important;
+            color: #ffffff !important;
+            box-shadow: 0 0 8px rgba(46, 204, 113, 0.4);
+        }
+
+        .btn-green-pause:hover {
+            background: #27ae60 !important;
+        }
+
+        .btn-green-pause:active {
+            transform: scale(0.95);
         }
 
         /* --- CONTROLES TÁCTILES --- */
@@ -253,30 +270,6 @@
         .btn-w:active, .btn-w.active {
             transform: scale(0.92);
             background: radial-gradient(circle, #cc9900 0%, #996600 100%);
-        }
-
-        /* Botón Verde Enter (Pausa) */
-        .btn-enter {
-            top: 20px;
-            right: 20px;
-            width: 65px;
-            height: 55px;
-            background: radial-gradient(circle, #2ecc71 0%, #27ae60 100%);
-            border: 3px solid rgba(255, 255, 255, 0.9);
-            border-radius: 12px;
-            color: #ffffff;
-            font-size: 13px;
-            font-weight: 900;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 0 12px rgba(46, 204, 113, 0.5);
-            cursor: pointer;
-        }
-
-        .btn-enter:active, .btn-enter.active {
-            transform: scale(0.92);
-            background: radial-gradient(circle, #27ae60 0%, #1e8449 100%);
         }
 
         /* Joystick Azul (sin destello en el borde) */
@@ -429,7 +422,6 @@
     <!-- Controles Táctiles -->
     <div class="touch-overlay" id="touch-overlay">
         <div id="btn-w" class="btn-w touch-element">W</div>
-        <div id="btn-enter" class="btn-enter touch-element">ENTER</div>
         <div id="joystick-base" class="joystick-base touch-element">
             <div id="joystick-knob" class="joystick-knob"></div>
         </div>
@@ -440,6 +432,9 @@
 
     <!-- Panel de Control Superior -->
     <div class="control-panel">
+        <button id="btn-enter" class="game-btn btn-green-pause">
+            ⏸️ Pausar
+        </button>
         <button id="toggle-touch-btn" class="game-btn">
             👁️ Ocultar Controles
         </button>
@@ -725,14 +720,13 @@
                 saveConfig();
             });
 
-            // --- SISTEMA DE ARRASTRE Y ESCALADO (EDIT MODE) ---
+            // --- SISTEMA DE ESCALADO ---
             function applyScale(scale) {
                 currentScale = scale;
                 scaleSlider.value = scale;
                 scaleLabel.textContent = 'Tamaño: ' + Math.round(scale * 100) + '%';
 
                 btnW.style.transform = 'scale(' + scale + ')';
-                btnEnter.style.transform = 'scale(' + scale + ')';
                 base.style.transform = 'scale(' + scale + ')';
                 btnJump.style.transform = 'scale(' + scale + ')';
             }
@@ -746,7 +740,6 @@
                     visible: controlsVisible,
                     scale: currentScale,
                     w: { left: btnW.style.left, top: btnW.style.top, right: btnW.style.right, bottom: btnW.style.bottom },
-                    enter: { left: btnEnter.style.left, top: btnEnter.style.top, right: btnEnter.style.right, bottom: btnEnter.style.bottom },
                     joy: { left: base.style.left, top: base.style.top, right: base.style.right, bottom: base.style.bottom },
                     jump: { left: btnJump.style.left, top: btnJump.style.top, right: btnJump.style.right, bottom: btnJump.style.bottom }
                 };
@@ -770,7 +763,6 @@
                         }
 
                         setPos(btnW, config.w);
-                        setPos(btnEnter, config.enter);
                         setPos(base, config.joy);
                         setPos(btnJump, config.jump);
                     } catch(e) {}
@@ -783,9 +775,6 @@
                 
                 btnW.style.left = '20px'; btnW.style.top = '20px';
                 btnW.style.right = ''; btnW.style.bottom = '';
-
-                btnEnter.style.right = '20px'; btnEnter.style.top = '20px';
-                btnEnter.style.left = ''; btnEnter.style.bottom = '';
 
                 base.style.left = '35px'; base.style.bottom = '25px';
                 base.style.right = ''; base.style.top = '';
@@ -868,7 +857,6 @@
             }
 
             makeDraggable(btnW);
-            makeDraggable(btnEnter);
             makeDraggable(base);
             makeDraggable(btnJump);
 
@@ -977,25 +965,25 @@
             btnW.addEventListener('mouseup', releaseW);
             btnW.addEventListener('mouseleave', releaseW);
 
-            // --- BOTÓN ENTER (PAUSA) LOGIC ---
+            // --- BOTÓN ENTER / PAUSAR LOGIC ---
             function pressEnter() {
-                if (isEditMode) return;
-                btnEnter.classList.add('active');
                 sendKey('keydown', 'Enter', 'Enter', 13);
             }
 
             function releaseEnter() {
-                if (isEditMode) return;
-                btnEnter.classList.remove('active');
                 sendKey('keyup', 'Enter', 'Enter', 13);
             }
 
-            btnEnter.addEventListener('touchstart', function(e) { pressEnter(); if (!isEditMode) e.preventDefault(); }, { passive: false });
-            btnEnter.addEventListener('touchend', function(e) { releaseEnter(); if (!isEditMode) e.preventDefault(); });
-            btnEnter.addEventListener('touchcancel', releaseEnter);
             btnEnter.addEventListener('mousedown', pressEnter);
             btnEnter.addEventListener('mouseup', releaseEnter);
-            btnEnter.addEventListener('mouseleave', releaseEnter);
+            btnEnter.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                pressEnter();
+                setTimeout(releaseEnter, 100);
+            }, { passive: false });
+            btnEnter.addEventListener('click', function() {
+                canvas.focus();
+            });
 
             // --- BOTÓN DE SALTO LOGIC ---
             function pressJump() {
